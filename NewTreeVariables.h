@@ -64,9 +64,9 @@ bool data_PbPb = false; //true if you are running over Pb+Pb Data
 bool mc_PbPb = false; //true if you are running over Pb+Pb MC
 
 //-----When debugging... 
-bool debug_reco = false;
-bool debug_trth = false;
-bool debug = false;
+bool debug_reco = true;
+bool debug_trth = true;
+bool debug = true;
 bool debug_filled_histo = false;
 bool debug_write = true;
 

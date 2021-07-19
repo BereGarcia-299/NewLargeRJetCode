@@ -10,11 +10,10 @@
 #include <TLegend.h>
 #include "TTree.h"
 #include "TFile.h"
-#include "TFile.h"
 #include "TH1.h"
-#include "TF1.h"
 #include "TH2.h"
 #include "TMath.h"
+#include "TF1.h"
 #include "TRandom3.h"
 #include <TAttMarker.h>
 #include <TCanvas.h>
@@ -81,24 +80,77 @@ void write_TH1D_1DArray_to_file(TH1D* array[],int size ,string name_plot, int pT
 
 
 void MakeGaussianDis(string name_canvas,int numRows, int numColumns, TH1D* array[], int pTRanges[], TF1* tfArray[]){
-
+  
   TCanvas *new_canvas= new TCanvas(name_canvas.c_str(),name_canvas.c_str(),1000,1000);
   
   new_canvas->Divide(numColumns,numRows);
   
   for(int iPlot = 0; iPlot < numRows*numColumns; iPlot++){
+    new_canvas->cd(iPlot+1);
+    cout << __LINE__ << endl;
     array[iPlot]->SetMarkerStyle(20);
+    cout << __LINE__ << endl;
+    array[iPlot]->SetLineColor(kBlack);
+    cout << __LINE__ << endl;
     array[iPlot]->GetXaxis()->SetTitle("p^{Reco}_{T}/p^{Truth}_{T}");
     array[iPlot]->SetTitle(" ");
-    
+    cout << __LINE__ << endl;
     array[iPlot]->Fit(Form("fit_%i_%iGeV",pTRanges[iPlot],pTRanges[iPlot+1]),"M Q N","",0.8,1.2);
     tfArray[iPlot]->SetLineStyle(2);
-    tfArray[iPlot]->SetLineColor(kBlack);
+    cout << __LINE__ << endl;
+    tfArray[iPlot]->SetLineColor(kRed);
     
     array[iPlot]->Draw();
+    
     tfArray[iPlot]->Draw("same");
+    
     
   }
 }//-----Plots the Gaussian Distributions for jets that were matched (Truth and Redco jets) 
+
+
+
+void MakeGaussianDis(string name_canvas,int numRows, int numColumns, TH1D* array[], TH1D* extra_array[], int pTRanges[], TF1* arrayTF[], TF1* extra_TF[]){
+  
+  TCanvas *new_canvas= new TCanvas(name_canvas.c_str(),name_canvas.c_str(),1000,1000);
+  
+  new_canvas->Divide(numColumns,numRows);
+  
+  for(int iPlot = 0; iPlot < numRows*numColumns; iPlot++){
+    new_canvas->cd(iPlot+1);
+    
+    //-----Setting Marking Stayle
+    array[iPlot]->SetMarkerStyle(20);
+    extra_array[iPlot]->SetMarkerStyle(20);
+    
+    //-----Setting Colors
+    extra_array[iPlot]->SetLineColor(kBlack);
+    extra_array[iPlot]->SetLineColor(kRed);
+    
+    //-----Setting Axis Names and title
+    array[iPlot]->GetXaxis()->SetTitle("p^{Reco}_{T}/p^{Truth}_{T}");
+    array[iPlot]->SetTitle(" ");
+
+
+    array[iPlot]->Fit(Form("fit_%i_%iGeV",pTRanges[iPlot],pTRanges[iPlot+1]),"M Q N","",0.8,1.2);
+    extra_array[iPlot]->Fit(Form("fit_%i_%iGeV",pTRanges[iPlot],pTRanges[iPlot+1]),"M Q N","",0.8,1.2);
+
+    //---Setting Fitting Line Style a& Color
+    arrayTF[iPlot]->SetLineStyle(2);
+    arrayTF[iPlot]->SetLineColor(kRed);
+
+    extra_TF[iPlot]->SetLineStyle(2);
+    extra_TF[iPlot]->SetLineColor(kBlack);
+
+    
+    array[iPlot]->Draw();
+    
+    arrayTF[iPlot]->Draw("same");
+    extra_TF[iPlot]->Draw("same");
+    extra_array[iPlot]->Draw("same");
+  }
+}//-----Plots the Gaussian Distributions for jets that were matched (Truth and Redco jets) 
+
+
 
 
