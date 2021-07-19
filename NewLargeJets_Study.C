@@ -35,8 +35,10 @@ int NewLargeJets_Study(){
     //---------------------------------pp MC----------------------------------//
     //------------------------------------------------------------------------//
     TH1D* pTReco_Truth_IsoR10[totRanges];
-    Make_Pre_JER_Or_JES(pTReco_Truth_IsoR10, "JER_R10",pTRanges,totRanges,45);
-    
+    TH1D* pTReco_Truth_R10[totRanges];
+    Make_Pre_JER_Or_JES(pTReco_Truth_R10, "JER_R10",pTRanges,totRanges,45);
+    Make_Pre_JER_Or_JES(pTReco_Truth_IsoR10, "JER_R10_IsoJet",pTRanges,totRanges,45);
+
     //------------------------------------------------------------------------//
     //---------------------------------pp Data--------------------------------//
     //------------------------------------------------------------------------//
@@ -121,110 +123,153 @@ int NewLargeJets_Study(){
     
     for (int iEvent_pp_MC = 0; iEvent_pp_MC < events_tot_pp_MC; ++iEvent_pp_MC){
 
-
-      tree_pp_MC->GetEntry(iEvent_pp_MC);
-
       
+      tree_pp_MC->GetEntry(iEvent_pp_MC);
+      
+	//----------------------------------------------------------------------------//
+	//------------------------Matching a truth jet to a reco jet------------------//
+	//----------------------------------------------------------------------------//
+      
+      for (int iJetTruth = 0; iJetTruth < akt10_pp_jet_n_trth; ++iJetTruth){
+	
+	if( (akt10_pp_jet_eta_trth->at(iJetTruth) > etaCut) || (akt10_pp_jet_eta_trth->at(iJetTruth)< -etaCut) ) continue;
+	
+	bool matched_reco = false;
+	int index_RecoJet = -1;
+	float delR_smallest = 1000;
+	
+	if(debug) cout << __LINE__ << endl;
+	for (int iJetReco = 0; iJetReco < akt10_pp_jet_n_reco; ++iJetReco){
+	  if( (akt10_reco_jet_etaJES_calib_eta->at(iJetReco) > etaCut) || (akt10_reco_jet_etaJES_calib_eta->at(iJetReco)< -etaCut) ) continue;
+	  if(debug) cout << __LINE__ << endl;
+	  float delta_R = deltaR_calc(akt10_pp_jet_eta_trth->at(iJetTruth),akt10_reco_jet_etaJES_calib_eta->at(iJetReco),akt10_reco_jet_etaJES_calib_phi->at(iJetReco),akt10_pp_jet_phi_trth->at(iJetTruth));
+	  if(debug) cout << __LINE__ << endl;
+	  if(delta_R > delR_smallest) continue;
+	  matched_reco = true;
+	  index_RecoJet = iJetReco;
+	  
+	}//-----Reco Jet Loop
+	if(debug) cout << __LINE__ << endl;
+        if(!matched_reco  || (index_RecoJet == -1)) continue;
+        //---Calculating Smallest deltaR
+	if(debug) cout << __LINE__ << endl;
+	for(int ipTRange = 0; ipTRange < totRanges; ipTRange++){
+	  if(debug) cout << __LINE__ << endl;
+	  if((akt10_pp_jet_pt_trth->at(iJetTruth) < pTRanges[ipTRange]) || (akt10_pp_jet_pt_trth->at(iJetTruth) > pTRanges[ipTRange+1]) ) continue;
+	  if(debug) cout << __LINE__ << endl;  
+	  for(int iJZ = 0; iJZ < total_samples; iJZ++){
+	    if(debug) cout << __LINE__ << endl;
+	     if( (iEvent_pp_MC <  num_JZ_range_entries[iJZ]) || (iEvent_pp_MC > num_JZ_range_entries[iJZ+1])) continue;
+	     if(debug) cout << __LINE__ << endl;
+	     if(debug) cout << "Reco pT: " << akt10_reco_jet_etaJES_calib_pt->at(index_RecoJet) << endl;
+	     if(debug) cout << __LINE__ << endl;
+	     if(debug) cout << "truth pT: " << akt10_pp_jet_pt_trth->at(iJetTruth) << endl;
+	     if(debug) cout << __LINE__ << endl;
+	     if(debug) cout << "weight: " << weights_ppMC[ipTRange] << endl;
+	     if(debug) cout << __LINE__ << endl;
+	     pTReco_Truth_R10[ipTRange]->Fill(akt10_reco_jet_etaJES_calib_pt->at(index_RecoJet)/akt10_pp_jet_pt_trth->at(iJetTruth),weights_ppMC[ipTRange]);
+	     if(debug) cout << __LINE__ << endl;
+	  }//------Looping over JZ samples
+	}//---Looping over pT ranges
+      }//----Matching Reco To Truth Loop
+
+	
+     //----------------------------------------------------------------------------//
+     //------------------------Matching a truth jet to a reco jet------------------//
+     //---------------------------But With Jet Isolation Cut-----------------------//
+     //----------------------------------------------------------------------------//	  
+
+
       //-----------R=1.0-----------//
-      int totIsolatedRecoJets = 0;    //-----Total number of Isolated Jets 
-      isolatedRecoJetsIndex.clear();   //-----We will keep the indicies of these isolated jets
-      bool NoRecoJetNearby = false; 
+      isolatedRecoJetsIndex.clear();  //-----We will keep the indicies of these isolated jets (Clearing it first)
+            
 
       if(debug_reco) cout << "We will not look for isolated jets! " << endl;
 
-      for(int iIsoRecoR10 = 0; iIsoRecoR10 < akt10_pp_jet_n_reco; iIsoRecoR10++){
-	if( (akt10_reco_jet_etaJES_calib_eta->at(iIsoRecoR10) > etaCut) || (akt10_reco_jet_etaJES_calib_eta->at(iIsoRecoR10)< -etaCut) ) continue;
+      for(int iRecoR10 = 0; iRecoR10 < akt10_pp_jet_n_reco; iRecoR10++){
+
+	if(akt10_reco_jet_etaJES_calib_eta->at(iRecoR10) < pTRecoCut) continue;
+	if( (akt10_reco_jet_etaJES_calib_eta->at(iRecoR10) > etaCut) || (akt10_reco_jet_etaJES_calib_eta->at(iRecoR10)< -etaCut) ) continue;
 
 	if(debug_reco) cout << "This is how many R=1.0 jets there are: " << akt10_pp_jet_n_reco << endl;
 
 	for(int iNearJet = 0; iNearJet < akt10_pp_jet_n_reco; iNearJet++ ){
 	  if(debug_reco) cout << "we will be looking at nearby jets. There are:  " << akt10_pp_jet_n_reco -1  << endl;
 
-	  if(iNearJet == iIsoRecoR10) continue;
+	  if(iNearJet == iRecoR10) continue;
+
           if( (akt10_reco_jet_etaJES_calib_eta->at(iNearJet) > etaCut) || (akt10_reco_jet_etaJES_calib_eta->at(iNearJet)< -etaCut) ) continue;
 
 	  if(debug_reco) cout << "This nearby jet passed the eta cut! " << endl;
  
-	  float delta_IsoR10 = deltaR_calc(akt10_reco_jet_etaJES_calib_eta->at(iNearJet), akt10_reco_jet_etaJES_calib_eta->at(iIsoRecoR10),akt10_reco_jet_etaJES_calib_phi->at(iNearJet), akt10_reco_jet_etaJES_calib_phi->at(iIsoRecoR10));
+	  float delta_IsoR10 = deltaR_calc(akt10_reco_jet_etaJES_calib_eta->at(iNearJet), akt10_reco_jet_etaJES_calib_eta->at(iRecoR10),akt10_reco_jet_etaJES_calib_phi->at(iNearJet), akt10_reco_jet_etaJES_calib_phi->at(iRecoR10));
 
 	  if(debug_reco) cout << "We calculated the deltaR of nearby jet and the first reco jet: " << delta_IsoR10 << endl; 
 	  
-	  if((delta_IsoR10 < deltaR_IsoCut) && (iNearJet+1 == akt10_pp_jet_n_reco)){
-	    if(debug_reco) cout << "**************This reco is islated!************************" << endl;
-	   NoRecoJetNearby = true;
-	   isolatedRecoJetsIndex.push_back(iIsoRecoR10);
-	   totIsolatedRecoJets++;
-	   break;
-	  }
+	  if(delta_IsoR10 >  deltaR_IsoCut) continue;
 	  
+	  
+	  
+	  if(debug_reco) cout << "**************This reco is islated!************************" << endl;
+	  
+	  if(iNearJet+1 == akt10_pp_jet_n_reco){
+	    isolatedRecoJetsIndex.push_back(iRecoR10);
+	  }//---Collecting the index of the Isolated Reco Jet!
+	
+
 	}//---Looping over all the rest of reco jets 
        
-	
       }//----Looping over all jets. I am looking for an isolated jet.
    
-  
-       if(!NoRecoJetNearby) continue; //------If there are no isolated reco jets continue to the next event
+   
+      if(isolatedRecoJetsIndex.size() == 0) continue; //------If there are no isolated reco jets continue to the next event
+   
+      isolatedTruthJetsIndex.clear();  //-----We will keep the indicies of these isolated jets
 
-       int totIsolatedTruthJets = 0;    //-----Total number of Isolated Jets
-       isolatedTruthJetsIndex.clear();   //-----We will keep the indicies of these isolated jets
-       bool NoTruthJetNearby = false;
-
-       for(int iIsoTruth = 0; iIsoTruth < akt10_pp_jet_n_trth; iIsoTruth++){
+      
+       for(int iTruthR10 = 0; iTruthR10 < akt10_pp_jet_n_trth; iTruthR10++){
 	 
 	 if(debug_trth) cout << "This is how many R=1.0 jets there are: " << akt10_pp_jet_n_trth << endl; 
-	 
-	 if( (akt10_pp_jet_eta_trth->at(iIsoTruth) > etaCut) || (akt10_pp_jet_eta_trth->at(iIsoTruth) < -etaCut) ) continue;
+	 if(akt10_pp_jet_pt_trth->at(iTruthR10) < pTTruthCut) continue;
+	 if( (akt10_pp_jet_eta_trth->at(iTruthR10) > etaCut) || (akt10_pp_jet_eta_trth->at(iTruthR10) < -etaCut) ) continue;
 	 
 	 for(int iNearTruthJet = 0; iNearTruthJet < akt10_pp_jet_n_trth; iNearTruthJet++){
 
 	   if(debug_trth) cout << "we will be looking at nearby jets. There are:  " << akt10_pp_jet_n_trth -1  << endl;
 
-	   if(iNearTruthJet  == iIsoTruth){continue;}
+	   if(iNearTruthJet  == iTruthR10){continue;}
 	   if( (akt10_pp_jet_eta_trth->at(iNearTruthJet) > etaCut) || (akt10_pp_jet_eta_trth->at(iNearTruthJet) < -etaCut) ) continue;
 	   
 	   if(debug_trth) cout << "This nearby jet passed the eta cut! " << endl;
 
-	   float deltaR10_Truth = deltaR_calc(akt10_pp_jet_eta_trth->at(iIsoTruth), akt10_pp_jet_eta_trth->at(iNearTruthJet),akt10_pp_jet_phi_trth->at(iIsoTruth),akt10_pp_jet_phi_trth->at(iNearTruthJet));
+	   float deltaR10_Truth = deltaR_calc(akt10_pp_jet_eta_trth->at(iTruthR10), akt10_pp_jet_eta_trth->at(iNearTruthJet),akt10_pp_jet_phi_trth->at(iTruthR10),akt10_pp_jet_phi_trth->at(iNearTruthJet));
 
 	   if(debug_trth) cout << "We calculated the deltaR of nearby jet and the first reco jet: " << deltaR10_Truth << endl;
 
-	   if((deltaR10_Truth < deltaR_IsoCut) && (iNearTruthJet+1 == akt10_pp_jet_n_trth)){
+	   if(deltaR10_Truth > deltaR_IsoCut) continue;
+
+	   if((iNearTruthJet+1 == akt10_pp_jet_n_trth)){
 	     //if(debug_trth) cout << "**************This reco is islated!************************" << endl;
-	    NoTruthJetNearby = true;
-	    if(debug) cout << "this is the index of your matched truth jet: " << iIsoTruth << endl;
-	    isolatedTruthJetsIndex.push_back(iIsoTruth);
-	    if(debug) cout << "I have now put it in the vector! " << endl;
-            totIsolatedTruthJets++;
-	    break;
+	    if(debug) cout << "this is the index of your matched truth jet: " << iTruthR10 << endl;
+	    isolatedTruthJetsIndex.push_back(iTruthR10);
           }
 
 	}//----Looping over all the rest of the jets
 	
       }//---Looping over all jets. I am looking for an isolated jet
-       if(debug) cout << "We found isolated truth jets? " << NoTruthJetNearby << endl;
-       if(debug) cout << "We found isolated Reco jets? " << NoRecoJetNearby << endl;
-      
-      if(!NoRecoJetNearby || !NoTruthJetNearby) continue; //----making sure I have at least one isolated reco and truth jets
-      if(debug){
-	cout << "orinting out the indecies of your truth jets" << endl;
-        for(int index = 0; index < totIsolatedTruthJets; index++){
-	  cout << isolatedTruthJetsIndex.at(index) << endl;
-	}//----looping over indecies
-      }
-      if(debug) cout << "We found isolated truth and reco jets!!" << endl; 
-      if(debug) cout << "We will now loop over the number of isolated reco jets. There are: " << totIsolatedRecoJets << endl;
-      if(debug) cout << "There are " << totIsolatedTruthJets << " isolated truth jets" << endl;
 
-       for(int iIsoRecoJets = 0; iIsoRecoJets < totIsolatedRecoJets; iIsoRecoJets++ ){
+      if((isolatedTruthJetsIndex.size() == 0) || (isolatedRecoJetsIndex.size() == 0)){continue;} //----making sure I have at least one isolated reco and truth jets
+     
+      for(int iIsoRecoJets = 0; iIsoRecoJets < (int)isolatedRecoJetsIndex.size(); iIsoRecoJets++ ){
         float deltaR_Smallest = 10000;
 	int matched_truth_index = -1;
-	if(debug) cout << __LINE__ << endl;
+
 	int reco_index = isolatedRecoJetsIndex.at(iIsoRecoJets); 
-	if(debug) cout << __LINE__ << endl; 
-	for(int iIsoTruthJets = 0; iIsoTruthJets < totIsolatedTruthJets; iIsoTruthJets++){
-	  if(debug) cout << __LINE__ << endl;
+ 
+	for(int iIsoTruthJets = 0; iIsoTruthJets < (int)isolatedTruthJetsIndex.size(); iIsoTruthJets++){
+
 	  int truth_index = isolatedTruthJetsIndex.at(iIsoTruthJets);
-	  if(debug) cout << __LINE__ << endl;
+
 	  float deltaRTemp = deltaR_calc(akt10_pp_jet_eta_trth->at(truth_index),akt10_reco_jet_etaJES_calib_eta->at(reco_index),akt10_pp_jet_phi_trth->at(truth_index),akt10_reco_jet_etaJES_calib_phi->at(reco_index)); 
 	  if(debug) cout << "This is the delta R between reco jet number " << iIsoRecoJets << " and truth jet number " << iIsoTruthJets << endl;
 	  if(deltaR_Smallest > deltaRTemp) matched_truth_index = truth_index;
@@ -234,7 +279,6 @@ int NewLargeJets_Study(){
 
         if(matched_truth_index == -1) continue;
 	if(debug) cout << "**********************************WE FOUND A MATCH************************" << endl;
-	if(debug) cout << __LINE__ << endl;
 	
 	for(int ipTRange = 0; ipTRange < totRanges; ipTRange++){	
 	    
@@ -256,12 +300,12 @@ int NewLargeJets_Study(){
        }//-----Matched Reco Jets and Truth Pass Through here    
       
    
-}//----Event Loop
+ }//----Event Loop
 
 
 
     
- }//----------pp MC
+}//----------pp MC
 
 
 
@@ -413,7 +457,8 @@ int NewLargeJets_Study(){
  
    if(mc_pp){
      if(debug_write) cout << "We will now write your histograms!! " << endl;
-     write_TH1D_1DArray_to_file(pTReco_Truth_IsoR10,totRanges,"JER_R10",pTRanges);
+     write_TH1D_1DArray_to_file(pTReco_Truth_R10,totRanges,"JER_R10",pTRanges);
+     write_TH1D_1DArray_to_file(pTReco_Truth_IsoR10,totRanges,"JER_R10_IsoJet", pTRanges);
    }//-----pp MC
  
 
