@@ -58,16 +58,16 @@ double* logspace (double lo, double hi, int num) {
 
 
 //-----What Are You Going To Run Over? 
-bool mc_pp = true; ///true if you are running over pp mc
-bool data_pp = false; //true if you are running over pp data
+bool mc_pp = false; ///true if you are running over pp mc
+bool data_pp = true; //true if you are running over pp data
 bool data_PbPb = false; //true if you are running over Pb+Pb Data
 bool mc_PbPb = false; //true if you are running over Pb+Pb MC
 
-//-----When debugging... 
-bool debug_reco = true;
-bool debug_trth = true;
-bool debug = true;
-bool debug_filled_histo = false;
+//-----When debugging--------// 
+bool debug_reco = false;
+bool debug_trth = false;
+bool debug = false;
+bool debug_filled_histo = true;
 bool debug_write = true;
 
 //----Tree
@@ -104,11 +104,12 @@ int nvert = 0;
 int nvert3 = 0;
 bool HLT_j110_a10_lcw_subjes_L1J30_3 = 0;
 bool HLT_j110_a10_lcw_subjes_L1J30 = 0;
+bool HLT_j85 = false;
 int RunNumber = 0;
 
 
 //-----Jet pT Cut
-const float pTCut = 200; //GeV 
+const float pTCut = 160; //GeV 
 //-----Jet eta Cut
 const float etaCut = 2.2; 
 
@@ -180,14 +181,20 @@ std::vector<float> *akt10_InsituCalib_jet_pp_eta = NULL;
 std::vector<float> *akt10_InsituCalib_jet_pp_e = NULL; 
 
 //-----Enum 
-enum Radii {R10,R4,R3,R2};
+enum Radii {Rad10,Rad4,Rad3,Rad2};
 
 
 //----Jets per Lumi Block plot
-const int totRuns = 13;
-const int tot_jetRadii = 4; 
-int jetRadius[tot_jetRadii] ={10,4,3,2};
-int runNumber[] = {341123,341184,341027,340973,340925,340910,340850,340849,340814,340718,340697,340683,340644};
+={4,3};const int totRuns = 13;
+const int tot_jetRadii = 2; 
+int jetRadius[tot_jetRadii] ={4,3};
+int runNumber[] = {341184,341123,341027,340973,340925,340910,340850,340849,340814,340718,340697,340683,340644};
+
+//----JetpT Distributions
+int sumpTWO_With =2; 
+int sumpTCut = 10; //GeV
+enum SumpT_TF{WOSumpT, WSumpT}; //---with sumpT Cut and without it 
+string SumpT[]={"WOSumpT","WSumpT"};
 
 //----Eta Distributions & Eta-Phi Plots For Jets w/ SumpT > 10 GeV
 const int ends_of_pTSlices = 5;
@@ -201,6 +208,25 @@ int sumpT_Trk_pTSlices[pTSlices_EtaPlots]={600,800,1000,1300};
 //------------------------------------------------------------------------//
 //---------------------------------pp MC----------------------------------//
 //------------------------------------------------------------------------//
+
+//----Jets R's
+enum MCRadii {R10,R4};
+const int Tot_Radii = 2;
+int JetRadius[] = {10,4};
+
+//-----Vectors
+//-----Jets
+int aktR_jet_n_MCReco = 0;
+std::vector<float> *aktR_etaJES_jet_MCReco_pt = NULL;
+std::vector<float> *aktR_etaJES_jet_MCReco_phi = NULL;
+std::vector<float> *aktR_etaJES_jet_MCReco_eta = NULL;
+std::vector<float> *aktR_etaJES_jet_MCReco_e = NULL;
+
+int aktR_jet_n_MCTrth = 0;
+std::vector<float> *aktR_jet_MCTrth_pt = NULL;
+std::vector<float> *aktR_jet_MCTrth_phi = NULL;
+std::vector<float> *aktR_jet_MCTrth_eta = NULL;
+std::vector<float> *aktR_MCTrth_e = NULL;
 
 //------Jet Cuts
 const int pTTruthCut = 40; //GeV

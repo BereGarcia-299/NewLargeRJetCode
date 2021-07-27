@@ -73,7 +73,7 @@ void Make_Pre_JER_Or_JES(TH1D* array_plots[],string name_plots, int pTRanges[], 
 
 void write_TH1D_1DArray_to_file(TH1D* array[],int size ,string name_plot, int pTSlice[]){
   for(int index = 0; index < size; index++){
-    array[index]->Write(Form("%s_%i_%i",name_plot.c_str(),pTSlice[index],pTSlice[index+1]),TObject::kOverwrite);
+    array[index]->Write(Form("%s_%i_%iGeV",name_plot.c_str(),pTSlice[index],pTSlice[index+1]),TObject::kOverwrite);
   }
 }//------Writing out histograms to root file (For 1D Arrays)
 
